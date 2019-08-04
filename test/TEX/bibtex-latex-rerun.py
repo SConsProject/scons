@@ -47,14 +47,14 @@ env = Environment(tools=['pdftex', 'tex'])
 env.PDF( 'bibtest.tex' )
 """)
 
-test.write(['bibtest.tex'], r"""
+sources_tex_content = r"""
 \documentclass{article}
 \begin{document}
-Learn about cool math in \cite{koblitz:elliptic_curves}.
+Learn about %s cool math in \cite{koblitz:elliptic_curves}.
 \bibliographystyle{alpha}
 \bibliography{sources}
 \end{document}
-""")
+"""
 
 sources_bib_content = r"""
 @book{koblitz:elliptic_curves,
@@ -67,14 +67,24 @@ sources_bib_content = r"""
 
 
 
+test.write(['bibtest.tex'], sources_tex_content % "")
 test.write('sources.bib', sources_bib_content % '1981')
 
 test.run()
 
 pdf_output_1 = test.read('bibtest.pdf')
 
+# Change tex, but don't change bib. In this case, pdf should still be rebuilt.
+test.write(['bibtest.tex'], sources_tex_content % "really")
+test.run()
+pdf_output_1a = test.read('bibtest.pdf')
+# If the PDF file is the same as it was previously, then it didn't
+# pick up the change in the tex file, so fail.
+test.fail_test(pdf_output_1 == pdf_output_1a)
 
 
+# Change bib.
+test.write(['bibtest.tex'], sources_tex_content % "")
 test.write('sources.bib', sources_bib_content % '1982')
 
 test.run()

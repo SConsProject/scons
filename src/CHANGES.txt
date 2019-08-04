@@ -23,6 +23,9 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
         - JSON encoding errors for CacheDir config
         - JSON decoding errors for CacheDir config
 
+  From Lukas Schrangl:
+    - Run LaTeX after biber/bibtex only if necessary
+
 
 RELEASE 3.1.0 - Mon, 20 Jul 2019 16:59:23 -0700
 
