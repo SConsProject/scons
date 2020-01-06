@@ -302,9 +302,9 @@ else:
             """Put task into request queue."""
             self.requestQueue.put(task)
 
-        def get():
+        def get(self, block=True):
             """Remove and return a result tuple from the results queue."""
-            return self.resultsQueue.get()
+            return self.resultsQueue.get(block=block)
 
         def preparation_failed(self, task):
             self.resultsQueue.put((task, False))
@@ -420,7 +420,7 @@ else:
 
                while jobs:
                   try:
-                     task, ok = self.tp.resultsQueue.get(block=should_block)
+                     task, ok = self.tp.get(block=should_block)
                      jobs = jobs - 1
 
                      # We waited for a job to complete. We don't need
