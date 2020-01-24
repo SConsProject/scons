@@ -35,6 +35,7 @@ import SCons.compat
 
 import os
 import signal
+import sys
 
 import SCons.Errors
 
@@ -376,82 +377,65 @@ else:
 
             while True:
 
-               # Process jobs until we find one that requires
-               # execution, and enqueue it.
-               while True:
-                  task = self.taskmaster.next_task()
-                  if not task:
-                     break
-
-                  try:
-                     # prepare task for execution
-                     task.prepare()
-                  except:
-                     task.exception_set()
-                     task.failed()
-                     task.postprocess()
-                  else:
-                     if task.needs_execute():
-                        # dispatch task
-                        self.tp.put(task)
-                        jobs = jobs + 1
+                # Process jobs until we find one that requires
+                # execution, and enqueue it.
+                while True:
+                    task = self.taskmaster.next_task()
+                    if not task:
                         break
-                     else:
-                        task.executed()
+
+                    try:
+                        # pepare task for execution
+                        task.prepare()
+                    except:
+                        task.exception_set()
+                        task.failed()
                         task.postprocess()
+                    else:
+                        if task.needs_execute():
+                            # dispatch task
+                            self.tp.put(task)
+                            jobs = jobs + 1
+                            break
+                        else:
+                            task.executed()
+                            task.postprocess()
 
 
-               # If 'task' is true-ish, then we enqueued a new
-               # task. If 'task' is falseish, then we didn't. If we
-               # didn't enqueue a task and we don't have any jobs
-               # pending, then there is nothing left to do.
-               if not (task or jobs):
-                  break
+                # If 'task' is true-ish, then we enqueued a new task,
+                # otherwise we didn't. If we didn't enqueue a task and
+                # we don't have any jobs pending, then there is
+                # nothing left to do.
+                if not (task or jobs):
+                    break
 
+                while True:
+                    try:
+                        task, ok = self.tp.get(block=(task is None))
+                        jobs = jobs - 1
+                    except queue.Empty:
+                        # We did a non-blocking wait, but there was
+                        # nothing ready yet. See if we can find another
+                        # task to enqueue. If we can't we will end up
+                        # back in this loop but we will do a blocking
+                        # wait.
+                        break
 
-               # If we are at maxjobs, then force a wait for a job
-               # completion so that we don't go over the limit by
-               # looping back up to next_task. If we didn't find any
-               # new tasks above, we must also block so that we don't
-               # busy loop.
-               should_block = False
-               should_block |= (jobs == self.maxjobs)
-               should_block |= (task == None)
-
-               while jobs:
-                  try:
-                     task, ok = self.tp.get(block=should_block)
-                     jobs = jobs - 1
-
-                     # We waited for a job to complete. We don't need
-                     # to wait again, but we can dequeue any
-                     # additional completed jobs that are available
-                     # without waiting.
-                     should_block = False
-
-                  except queue.Empty as empty:
-                     # We did a non-blocking wait, but there was
-                     # nothing ready yet. See if we can find another
-                     # task to enqueue. If we can't we will end up
-                     # back in this loop but we will do a blocking
-                     # wait.
-                     break
-
-                  if ok:
-                     task.executed()
-                  else:
-                     if self.interrupted():
-                        try:
-                           raise SCons.Errors.BuildError(
-                              task.targets[0], errstr=interrupt_msg)
-                        except:
-                           task.exception_set()
+                    if ok:
+                        task.executed()
+                    else:
+                        if self.interrupted():
+                            try:
+                                raise SCons.Errors.BuildError(
+                                    task.targets[0], errstr=interrupt_msg)
+                            except:
+                                task.exception_set()
 
                         # Let the failed() callback function arrange
                         # for the build to stop if that's appropriate.
-                     task.failed()
+                        task.failed()
 
-                  task.postprocess()
+                    task.postprocess()
 
             self.tp.cleanup()
             self.taskmaster.cleanup()
