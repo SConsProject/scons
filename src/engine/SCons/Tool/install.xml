@@ -7,129 +7,200 @@ See its __doc__ string for a discussion of the format.
 -->
 
 <!DOCTYPE sconsdoc [
-<!ENTITY % scons SYSTEM '../../../../doc/scons.mod'>
-%scons;
-<!ENTITY % builders-mod SYSTEM '../../../../doc/generated/builders.mod'>
-%builders-mod;
-<!ENTITY % functions-mod SYSTEM '../../../../doc/generated/functions.mod'>
-%functions-mod;
-<!ENTITY % tools-mod SYSTEM '../../../../doc/generated/tools.mod'>
-%tools-mod;
-<!ENTITY % variables-mod SYSTEM '../../../../doc/generated/variables.mod'>
-%variables-mod;
-]>
+        <!ENTITY % scons SYSTEM '../../../../doc/scons.mod'>
+        %scons;
+        <!ENTITY % builders-mod SYSTEM '../../../../doc/generated/builders.mod'>
+        %builders-mod;
+        <!ENTITY % functions-mod SYSTEM '../../../../doc/generated/functions.mod'>
+        %functions-mod;
+        <!ENTITY % tools-mod SYSTEM '../../../../doc/generated/tools.mod'>
+        %tools-mod;
+        <!ENTITY % variables-mod SYSTEM '../../../../doc/generated/variables.mod'>
+        %variables-mod;
+        ]>
 
 <sconsdoc xmlns="http://www.scons.org/dbxsd/v1.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://www.scons.org/dbxsd/v1.0 http://www.scons.org/dbxsd/v1.0/scons.xsd">
 
 
-<tool name="install">
-<summary>
-<para>
-Sets construction variables for file
-and directory installation.
-</para>
-</summary>
-<sets>
-<item>INSTALL</item>
-<item>INSTALLSTR</item>
-</sets>
-</tool>
+    <tool name="install">
+        <summary>
+            <para>
+                Sets construction variables for file
+                and directory installation.
+            </para>
+        </summary>
+        <sets>
+            <item>INSTALL</item>
+            <item>INSTALLSTR</item>
+            <item>INSTALLFILECOPY</item>
+            <item>INSTALLFILECOPYFLAGS</item>
+            <item>INSTALLDIRCOPY</item>
+            <item>INSTALLDIRCOPYFLAGS</item>
+        </sets>
+    </tool>
 
-<builder name="Install">
-<summary>
-<para>
-Installs one or more source files or directories
-in the specified target,
-which must be a directory.
-The names of the specified source files or directories
-remain the same within the destination directory. The
-sources may be given as a string or as a node returned by
-a builder.
-</para>
+    <cvar name="INSTALLFILECOPY">
+        <summary>
+            <para>
+                The command to call to copy a file as part of the Install() and InstallAs() builders.
+            </para>
+            <para>
+                For Posix systems defaults to
+                <example_commands>cp</example_commands>
+            </para>
+            <para>
+                For Win32 systems defaults to
+                <example_commands>Xcopy</example_commands>
+            </para>
+        </summary>
+    </cvar>
 
-<example_commands>
-env.Install(target='/usr/local/bin', source=['foo', 'bar'])
-</example_commands>
+    <cvar name="INSTALLFILECOPYFLAGS">
+        <summary>
+            <para>
+                Flags to add to the command line for copying a file as part of the Install() and InstallAs() builders.
+                The defaults below preserve ownership and file permissions.
+            </para>
+            <para>
+                For Posix systems defaults to
+                <example_commands>-p</example_commands>
+            </para>
+            <para>
+                For Win32 systems defaults to
+                <example_commands>/o /x</example_commands>
+            </para>
+        </summary>
+    </cvar>
 
-<para>
-Note that if target paths chosen for the
-&Install; builder (and the related &InstallAs; and
-&InstallVersionedLib; builders) are outside the
-project tree, such as in the example above,
-they may not be selected for "building" by default,
-since in the absence of other instructions
-&scons; builds targets that are underneath the top directory
-(the directory that contains the &SConstruct; file,
-usually the current directory).
-Use command line targets or the &Default; function
-in this case.
-</para>
+    <cvar name="INSTALLDIRCOPY">
+        <summary>
+            <para>
+                The command to call to copy a directory tree as part of the Install() and InstallAs() builders.
+            </para>
+            <para>
+                For Posix systems defaults to
+                <example_commands>cp</example_commands>
+            </para>
+            <para>
+                For Win32 systems defaults to
+                <example_commands>Xcopy</example_commands>
+            </para>
+        </summary>
+    </cvar>
 
-<para>
-If the <option>--install-sandbox</option> command line
-option is given, the target directory will be prefixed
-by the directory path specified.
-This is useful to test installs without installing to
-a "live" location in the system.
-</para>
+    <cvar name="INSTALLDIRCOPYFLAGS">
+        <summary>
+            <para>
+                Flags to add to the command line for copying a directory tree as part of the Install() and InstallAs()
+                builders.                 
+                The defaults below preserve ownership and file permissions.
+            </para>
+            <para>
+                For Posix systems defaults to
+                <example_commands>-p -r</example_commands>
+            </para>
+            <para>
+                For Win32 systems defaults to
+                <example_commands>/o /x /s /e</example_commands>
+            </para>
+        </summary>
+    </cvar>
 
-<para>
-See also &FindInstalledFiles;.
-For more thoughts on installation, see the User Guide
-(particularly the section on Command-Line Targets
-and the chapters on Installing Files and on Alias Targets).
-</para>
+    <builder name="Install">
+        <summary>
+            <para>
+                Installs one or more source files or directories
+                in the specified target,
+                which must be a directory.
+                The names of the specified source files or directories
+                remain the same within the destination directory. The
+                sources may be given as a string or as a node returned by
+                a builder.
+            </para>
 
-</summary>
-</builder>
+            <example_commands>
+                env.Install(target='/usr/local/bin', source=['foo', 'bar'])
+            </example_commands>
 
-<builder name="InstallAs">
-<summary>
-<para>
-Installs one or more source files or directories
-to specific names,
-allowing changing a file or directory name
-as part of the installation.
-It is an error if the
-target
-and
-source
-arguments list different numbers of files or directories.
-</para>
+            <para>
+                Note that if target paths chosen for the
+                &Install; builder (and the related &InstallAs; and
+                &InstallVersionedLib; builders) are outside the
+                project tree, such as in the example above,
+                they may not be selected for "building" by default,
+                since in the absence of other instructions
+                &scons; builds targets that are underneath the top directory
+                (the directory that contains the &SConstruct; file,
+                usually the current directory).
+                Use command line targets or the &Default; function
+                in this case.
+            </para>
 
-<example_commands>
-env.InstallAs(target='/usr/local/bin/foo',
-              source='foo_debug')
-env.InstallAs(target=['../lib/libfoo.a', '../lib/libbar.a'],
-              source=['libFOO.a', 'libBAR.a'])
-</example_commands>
+            <para>
+                If the <option>--install-sandbox</option> command line
+                option is given, the target directory will be prefixed
+                by the directory path specified.
+                This is useful to test installs without installing to
+                a "live" location in the system.
+            </para>
 
-<para>
-See the note under &Install;.
-</para>
+            <para>
+                See also &FindInstalledFiles;.
+                For more thoughts on installation, see the User Guide
+                (particularly the section on Command-Line Targets
+                and the chapters on Installing Files and on Alias Targets).
+            </para>
 
-</summary>
-</builder>
+        </summary>
+    </builder>
 
-<builder name="InstallVersionedLib">
-<summary>
-<para>
-Installs a versioned shared library. The symlinks appropriate to the
-architecture will be generated based on symlinks of the source library.
-</para>
+    <builder name="InstallAs">
+        <summary>
+            <para>
+                Installs one or more source files or directories
+                to specific names,
+                allowing changing a file or directory name
+                as part of the installation.
+                It is an error if the
+                target
+                and
+                source
+                arguments list different numbers of files or directories.
+            </para>
 
-<example_commands>
-env.InstallVersionedLib(target='/usr/local/bin/foo',
-                        source='libxyz.1.5.2.so')
-</example_commands>
+            <example_commands>
+                env.InstallAs(target='/usr/local/bin/foo',
+                source='foo_debug')
+                env.InstallAs(target=['../lib/libfoo.a', '../lib/libbar.a'],
+                source=['libFOO.a', 'libBAR.a'])
+            </example_commands>
 
-<para>
-See the note under &Install;.
-</para>
+            <para>
+                See the note under &Install;.
+            </para>
 
-</summary>
-</builder>
+        </summary>
+    </builder>
+
+    <builder name="InstallVersionedLib">
+        <summary>
+            <para>
+                Installs a versioned shared library. The symlinks appropriate to the
+                architecture will be generated based on symlinks of the source library.
+            </para>
+
+            <example_commands>
+                env.InstallVersionedLib(target='/usr/local/bin/foo',
+                source='libxyz.1.5.2.so')
+            </example_commands>
+
+            <para>
+                See the note under &Install;.
+            </para>
+
+        </summary>
+    </builder>
 
 </sconsdoc>

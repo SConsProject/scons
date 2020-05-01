@@ -55,11 +55,15 @@ f.close()
 test.writable('test2.out', 1)
 
 test.description_set("Incorrect STDERR:\n%s" % test.stderr())
+stderr_lines = test.stderr().splitlines()
+test.description_set("Incorrect STDERR:\n%s" % stderr_lines)
+
+#TODO need windows specific first line..
 errs = [
-    "scons: *** [test2.out] test2.out: Permission denied\n",
-    "scons: *** [test2.out] test2.out: permission denied\n",
+    "cp: cannot create regular file 'test2.out': Permission denied",
+    "scons: *** [test2.out] Error 1",
 ]
-test.fail_test(test.stderr() not in errs)
+test.fail_test(stderr_lines != errs)
 
 test.pass_test()
 

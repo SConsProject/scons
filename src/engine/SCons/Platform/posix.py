@@ -110,8 +110,9 @@ def generate(env):
     env['ESCAPE']         = escape
     env['TEMPFILE']       = TempFileMunge
     env['TEMPFILEPREFIX'] = '@'
-    #Based on LINUX: ARG_MAX=ARG_MAX=131072 - 3000 for environment expansion
-    #Note: specific platforms might rise or lower this value
+
+    # Based on LINUX: ARG_MAX=ARG_MAX=131072 - 3000 for environment expansion
+    # Note: specific platforms might increase or decrease this value
     env['MAXLINELENGTH']  = 128072
 
     # This platform supports RPATH specifications.

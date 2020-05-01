@@ -56,41 +56,42 @@ env.Install('../outside',  'dir3')
 env.InstallAs('../outside/d4',  'dir4')
 """)
 
-test.write(['work', 'f1'],                      "work/f1\n")
-test.write(['work', 'dir1', 'f2'],              "work/dir1/f2\n")
-test.write(['work', 'dir1', 'sub', 'f3'],       "work/dir1/sub/f3\n")
-test.write(['work', 'dir2', 'f4'],              "work/dir2/f4\n")
-test.write(['work', 'dir2', 'sub', 'f5'],       "work/dir2/sub/f5\n")
-test.write(['work', 'dir3', 'f6'],              "work/dir3/f6\n")
-test.write(['work', 'dir3', 'sub', 'f7'],       "work/dir3/sub/f7\n")
-test.write(['work', 'dir4', 'f8'],              "work/dir4/f8\n")
-test.write(['work', 'dir4', 'sub', 'f9'],       "work/dir4/sub/f9\n")
-
+test.write(['work', 'f1'], "work/f1\n")
+test.write(['work', 'dir1', 'f2'], "work/dir1/f2\n")
+test.write(['work', 'dir1', 'sub', 'f3'], "work/dir1/sub/f3\n")
+test.write(['work', 'dir2', 'f4'], "work/dir2/f4\n")
+test.write(['work', 'dir2', 'sub', 'f5'], "work/dir2/sub/f5\n")
+test.write(['work', 'dir3', 'f6'], "work/dir3/f6\n")
+test.write(['work', 'dir3', 'sub', 'f7'], "work/dir3/sub/f7\n")
+test.write(['work', 'dir4', 'f8'], "work/dir4/f8\n")
+test.write(['work', 'dir4', 'sub', 'f9'], "work/dir4/sub/f9\n")
 
 arguments = [
-    test.workpath('outside', 'dir1'),
     test.workpath('outside', 'd2'),
-    test.workpath('outside', 'dir3'),
     test.workpath('outside', 'd4'),
+    test.workpath('outside', 'dir1'),
+    test.workpath('outside', 'dir3'),
 ]
 
 expect = test.wrap_stdout("""\
-Install directory: "dir1" as "%s"
 Install directory: "dir2" as "%s"
-Install directory: "dir3" as "%s"
 Install directory: "dir4" as "%s"
+Install directory: "dir1" as "%s"
+Install directory: "dir3" as "%s"
 """ % tuple(arguments))
 
-test.run(chdir = 'work', arguments = arguments, stdout = expect)
 
-test.must_match(test.workpath('outside', 'dir1', 'f2'),         "work/dir1/f2\n")
-test.must_match(test.workpath('outside', 'dir1', 'sub', 'f3'),  "work/dir1/sub/f3\n")
-test.must_match(test.workpath('outside', 'd2', 'f4'),           "work/dir2/f4\n")
-test.must_match(test.workpath('outside', 'd2', 'sub', 'f5'),    "work/dir2/sub/f5\n")
-test.must_match(test.workpath('outside', 'dir3', 'f6'),         "work/dir3/f6\n")
-test.must_match(test.workpath('outside', 'dir3', 'sub', 'f7'),  "work/dir3/sub/f7\n")
-test.must_match(test.workpath('outside', 'd4', 'f8'),           "work/dir4/f8\n")
-test.must_match(test.workpath('outside', 'd4', 'sub', 'f9'),    "work/dir4/sub/f9\n")
+
+test.run(chdir='work', arguments=arguments, stdout=expect)
+
+test.must_match(test.workpath('outside', 'dir1', 'f2'), "work/dir1/f2\n")
+test.must_match(test.workpath('outside', 'dir1', 'sub', 'f3'), "work/dir1/sub/f3\n")
+test.must_match(test.workpath('outside', 'd2', 'f4'), "work/dir2/f4\n")
+test.must_match(test.workpath('outside', 'd2', 'sub', 'f5'), "work/dir2/sub/f5\n")
+test.must_match(test.workpath('outside', 'dir3', 'f6'), "work/dir3/f6\n")
+test.must_match(test.workpath('outside', 'dir3', 'sub', 'f7'), "work/dir3/sub/f7\n")
+test.must_match(test.workpath('outside', 'd4', 'f8'), "work/dir4/f8\n")
+test.must_match(test.workpath('outside', 'd4', 'sub', 'f9'), "work/dir4/sub/f9\n")
 
 test.pass_test()
 

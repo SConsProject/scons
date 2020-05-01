@@ -441,7 +441,6 @@ def generate(env):
     if enable_virtualenv and not ignore_virtualenv:
         ImportVirtualenv(env)
 
-
 # Local Variables:
 # tab-width:4
 # indent-tabs-mode:nil

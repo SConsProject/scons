@@ -507,6 +507,16 @@ class EntryProxy(SCons.Util.Proxy):
     def __get_dir(self):
         return EntryProxy(self.get().dir)
 
+    def __get_node_type(self):
+        actual = self.get()
+        if isinstance(actual, Dir):
+            return "directory"
+        elif isinstance(actual, File):
+            return "file"
+        else:
+            return "other"
+
+
     dictSpecialAttrs = { "base"     : __get_base_path,
                          "posix"    : __get_posix_path,
                          "windows"  : __get_windows_path,
@@ -520,6 +530,7 @@ class EntryProxy(SCons.Util.Proxy):
                          "file"     : __get_file,
                          "rsrcpath" : __get_rsrcnode,
                          "rsrcdir"  : __get_rsrcdir,
+                         "type"     : __get_node_type,
                        }
 
     def __getattr__(self, name):
