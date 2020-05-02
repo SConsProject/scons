@@ -282,7 +282,7 @@ class ParallelTestCase(unittest.TestCase):
 
         class SleepTask(Task):
             def _do_something(self):
-                time.sleep(0.01)
+                time.sleep(random.uniform(0, 0.9))
 
         global SaveThreadPool
         SaveThreadPool = SCons.Job.ThreadPool
@@ -291,9 +291,8 @@ class ParallelTestCase(unittest.TestCase):
             def put(self, task):
                 ThreadPoolCallList.append('put(%s)' % task.i)
                 return SaveThreadPool.put(self, task)
-            def get(self):
-                time.sleep(0.05)
-                result = SaveThreadPool.get(self)
+            def get(self, block):
+                result = SaveThreadPool.get(self, block)
                 ThreadPoolCallList.append('get(%s)' % result[0].i)
                 return result
 
@@ -310,7 +309,11 @@ class ParallelTestCase(unittest.TestCase):
             # tasks get scheduled by the operating system.
             expect = [
                 ['put(1)', 'put(2)', 'get(1)', 'get(2)', 'put(3)', 'get(3)'],
+                ['put(1)', 'put(2)', 'get(1)', 'put(3)', 'get(2)', 'get(3)'],
+                ['put(1)', 'put(2)', 'get(1)', 'put(3)', 'get(3)', 'get(2)'],
                 ['put(1)', 'put(2)', 'get(2)', 'get(1)', 'put(3)', 'get(3)'],
+                ['put(1)', 'put(2)', 'get(2)', 'put(3)', 'get(1)', 'get(3)'],
+                ['put(1)', 'put(2)', 'get(2)', 'put(3)', 'get(3)', 'get(1)'],
             ]
             assert ThreadPoolCallList in expect, ThreadPoolCallList
 
