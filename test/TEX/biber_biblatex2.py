@@ -72,7 +72,7 @@ sources_bib_content = r"""
 """
 test.write(['ref.bib'],sources_bib_content % '2013' )
 
-test.write(['bibertest.tex'],r"""
+sources_tex_content = r"""
 \documentclass{article}
 
 \usepackage{biblatex}
@@ -80,13 +80,14 @@ test.write(['bibertest.tex'],r"""
 
 \begin{document}
 
-Hello. This is boring.
+Hello. This is %s boring.
 \cite{mybook}
 And even more boring.
 
 \printbibliography
 \end{document}
-""")
+"""
+test.write(['bibertest.tex'], sources_tex_content % "")
 
 
 test.run()
@@ -110,7 +111,17 @@ for f in files:
 pdf_output_1 = test.read('bibertest.pdf')
 
 
+# Change tex, but don't change bib. In this case, pdf should still be rebuilt.
+test.write(['bibertest.tex'], sources_tex_content % "very")
+test.run()
+pdf_output_1a = test.read('bibertest.pdf')
+# If the PDF file is the same as it was previously, then it didn't
+# pick up the change in the tex file, so fail.
+test.fail_test(pdf_output_1 == pdf_output_1a)
 
+
+# Change bib.
+test.write(['bibertest.tex'], sources_tex_content % "")
 test.write(['ref.bib'],sources_bib_content % '1982')
 
 test.run()

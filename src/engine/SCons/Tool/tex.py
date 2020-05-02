@@ -348,7 +348,7 @@ def InternalLaTeXAuxAction(XXXLaTeXAction, target = None, source= None, env=None
                         result = BibTeXAction(bibfile, bibfile, env)
                         if result != 0:
                             check_file_error_message(env['BIBTEX'], 'blg')
-                        must_rerun_latex = True
+                        check_MD5(suffix_nodes[".bbl"], ".bbl")
 
         # Now decide if biber will need to be run.
         # When the backend for biblatex is biber (by choice or default) the
@@ -372,7 +372,7 @@ def InternalLaTeXAuxAction(XXXLaTeXAction, target = None, source= None, env=None
                         result = BiberAction(bibfile, bibfile, env)
                         if result != 0:
                             check_file_error_message(env['BIBER'], 'blg')
-                        must_rerun_latex = True
+                        check_MD5(suffix_nodes[".bbl"], ".bbl")
 
         # Now decide if latex will need to be run again due to index.
         if check_MD5(suffix_nodes['.idx'],'.idx') or (count == 1 and run_makeindex):
