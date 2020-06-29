@@ -20,6 +20,12 @@
     - Add CompilationDatabase() builder in compilation_db tool. Contributed by MongoDB.
       Setting COMPILATIONDB_USE_ABSPATH to True|False controls whether the files are absolute or relative
       paths.  Address Issue #3693 and #3694 found during development.
+    - Added a new command-line option "--stubprocess-wrapper", which will try to wrap the
+      subprocess.Popen() call when activated. Enabling this option can give a significant speedup
+      for the build of large projects that consume a lot of memory and create many files.
+      Small builds however may experience a slow-down, which is why we declared this option
+      an "experimental feature" for the moment. Please also refer to the corresponding entry
+      in the MAN page for more information.
 
 
   DEPRECATED FUNCTIONALITY

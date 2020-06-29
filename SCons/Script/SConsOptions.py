@@ -829,6 +829,11 @@ def Parser(version):
                   help="Set the stack size of the threads used to run jobs to N kilobytes.",
                   metavar="N")
 
+    op.add_option('--stubprocess-wrapper',
+                  dest='stubprocess_wrapper', default=False,
+                  action="store_true",
+                  help="Install the stubprocess wrapper for speeding up large builds.")
+
     op.add_option('--taskmastertrace',
                   nargs=1,
                   dest="taskmastertrace_file", default=None,

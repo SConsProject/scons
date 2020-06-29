@@ -988,6 +988,10 @@ def _main(parser):
     if options.interactive:
         SCons.Node.interactive = True
 
+    # Also set the stubprocess wrapper option, if requested.
+    if options.stubprocess_wrapper:
+        SCons.Platform.stubprocess_wrapper = True
+
     # That should cover (most of) the options.  Next, set up the variables
     # that hold command-line arguments, so the SConscript files that we
     # read and execute have access to them.

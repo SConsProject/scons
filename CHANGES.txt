@@ -14,6 +14,9 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
     - Updated documentation toolchain to work properly under Python3, also
       removed libxslt support from the Docbook Tool. (issue #3580)
     - Added Docker images for building and testing SCons. (issue #3585)
+    - Integrated stubprocess.py wrapper from the Parts project in order
+      to speed up large builds. It's available as an experimental option
+      '--stubprocess-wrapper' for now.
 
   From James Benton:
     - Improve Visual Studio solution/project generation code to add support

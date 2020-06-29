@@ -1219,6 +1219,7 @@ command:</para>
 -n, --no-exec, --just-print, --dry-run, --recon
 -Q
 -s, --silent, --quiet
+--stubprocess-wrapper
 --taskmastertrace=FILE
 --tree=OPTIONS
 </literallayout>
@@ -1666,6 +1667,32 @@ build process.
 The default value is to use a stack size of 256 kilobytes, which should
 be appropriate for most uses.  You should not need to increase this value
 unless you encounter stack overflow errors.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--stubprocess-wrapper</option></term>
+  <listitem>
+<para>Tries to activate the <filename>stubprocess.py</filename> wrapper from the <emphasis>Parts</emphasis>
+project for speeding up builds. This wrapper uses pickling of the Actions' arguments
+and calls itself again as a <emphasis>main</emphasis> Python script in order to let us use the fast
+<emphasis>vfork</emphasis> from the libc library. Currently, only the platforms
+<function>linux</function> and <function>darwin</function> are supported.</para>
+
+<para>Please note that the build time can actually grow when enabling this
+option, depending on the size of your project! Unfortunately, the redirection
+through a script lets us suffer from the startup times of the Python
+interpreter while searching and loading its required modules. So, if you have only a
+handful of files, all <emphasis>vfork</emphasis> benefits might get eaten
+up by the additional starting time for Python in each executed Action. As a result,
+your build gets slower in total.</para>
+
+<para>It's not possible to come up with a single recommendation, like: "If your project
+has more than 20000 files, use this option". Apart from the number of files to build,
+the memory consumed by the overall process, your OS and your HDD, it's also the Python interpreter
+version and which modules and dist-packages you have installed in it, that are all affecting
+the break-even point. In the end you simply have to try it out, and continue to use this
+option if you happen to find that it speeds up your build.</para>
   </listitem>
   </varlistentry>
 

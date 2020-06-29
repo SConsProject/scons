@@ -448,6 +448,14 @@ which corresponds to <option>--implicit-deps-unchanged</option>;
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><literal>stubprocess_wrapper</literal></term>
+<listitem>
+<para>
+which corresponds to <option>--stubprocess-wrapper</option>;
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><literal>interactive</literal></term>
 <listitem>
 <para>

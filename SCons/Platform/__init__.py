@@ -54,6 +54,9 @@ import SCons.Errors
 import SCons.Subst
 import SCons.Tool
 
+# Gets set to True in Main._main() when the '--stubprocess-wrapper'
+# option was given on the command-line for speeding up large builds.
+stubprocess_wrapper = False
 
 def platform_default():
     """Return the platform string for our execution environment.
