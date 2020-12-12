@@ -39,6 +39,10 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
     - Fix occasional test failures caused by not being able to find a file or directory fixture
       when running multiple tests with multiple jobs.
 
+  From Raven Kopelman (@ravenAtSafe on GitHub):
+    - Prevent files from being partially read from the cache. If there's an error while copying the file
+      is now removed.
+
   From Joachim Kuebart:
     - Suppress missing SConscript deprecation warning if `must_exist=False`
       is used.
@@ -50,6 +54,7 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
 
   From Daniel Moody:
     - Fix issue where java parsed a class incorrectly from lambdas used after a new.
+
 
   From Mats Wichmann:
     - Complete tests for Dictionary, env.keys() and env.values() for

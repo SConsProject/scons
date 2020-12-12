@@ -223,9 +223,12 @@ class Task(ABC):
                 cached_targets.append(t)
             if len(cached_targets) < len(self.targets):
                 # Remove targets before building. It's possible that we
-                # partially retrieved targets from the cache, leaving
-                # them in read-only mode. That might cause the command
+                # retrieved a subset of targets from the cache, leaving
+                # them in an inconsistent state. That might cause the command
                 # to fail.
+                #
+                # Note that retrieve_from_cache() ensures no single target can
+                # be partially retrieved (file left in corrupt state).
                 #
                 for t in cached_targets:
                     try:

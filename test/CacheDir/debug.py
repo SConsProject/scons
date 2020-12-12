@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# __COPYRIGHT__
+# Copyright The SCons Foundation
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -22,7 +22,6 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-__revision__ = "__FILE__ __REVISION__ __DATE__ __DEVELOPER__"
 
 """
 Test the --cache-debug option to see if it prints the expected messages.
@@ -145,16 +144,16 @@ test.unlink(['src', 'cat.out'])
 
 expect = \
 r"""Retrieved `aaa.out' from cache
-CacheRetrieve\(aaa.out\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(aaa.out\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
 Retrieved `bbb.out' from cache
-CacheRetrieve\(bbb.out\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(bbb.out\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
 Retrieved `ccc.out' from cache
-CacheRetrieve\(ccc.out\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(ccc.out\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
 Retrieved `all' from cache
-CacheRetrieve\(all\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(all\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
 """
 
@@ -179,13 +178,13 @@ test.run(chdir='src',
          stdout=expect)
 
 expect = \
-r"""CacheRetrieve\(aaa.out\):  retrieving from [0-9a-fA-F]+
+r"""CacheRetrieve\(aaa.out\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
-CacheRetrieve\(bbb.out\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(bbb.out\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
-CacheRetrieve\(ccc.out\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(ccc.out\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
-CacheRetrieve\(all\):  retrieving from [0-9a-fA-F]+
+CacheRetrieve\(all\):  retrieved from [0-9a-fA-F]+
 requests: [0-9]+, hits: [0-9]+, misses: [0-9]+, hit rate: [0-9]+\.[0-9]{2,}%
 """
 
