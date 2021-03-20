@@ -32,6 +32,7 @@ import gettext
 _ = gettext.gettext
 
 import SCons.Node.FS
+import SCons.Platform
 import SCons.Platform.virtualenv
 import SCons.Warnings
 from . import Main
@@ -852,6 +853,12 @@ def Parser(version):
                   action="store",
                   help="Trace Node evaluation to FILE.",
                   metavar="FILE")
+
+    if SCons.Platform.platform_default() == "posix":
+        op.add_option('--process-spawner',
+                      dest='process_spawner', default=False,
+                      action="store_true",
+                      help="Use a spawner process to speed up spawning.")
 
     tree_options = ["all", "derived", "prune", "status", "linedraw"]
 

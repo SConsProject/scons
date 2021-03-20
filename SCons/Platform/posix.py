@@ -33,7 +33,7 @@ import subprocess
 import select
 
 import SCons.Util
-from SCons.Platform import TempFileMunge
+from SCons.Platform import TempFileMunge, process_spawner
 from SCons.Platform.virtualenv import ImportVirtualenv
 from SCons.Platform.virtualenv import ignore_virtualenv, enable_virtualenv
 
@@ -55,9 +55,17 @@ def escape(arg):
     return '"' + arg + '"'
 
 
-def exec_subprocess(l, env):
-    proc = subprocess.Popen(l, env = env, close_fds = True)
-    return proc.wait()
+assert process_spawner is not None  # must be set before
+
+if process_spawner:
+    from SCons.Job import spawner_tls
+
+    def exec_subprocess(args, env):
+        return spawner_tls.spawner.run(args, env)
+else:
+    def exec_subprocess(args, env):
+        proc = subprocess.Popen(args, env = env, close_fds = True)
+        return proc.wait()
 
 def subprocess_spawn(sh, escape, cmd, args, env):
     return exec_subprocess([sh, '-c', ' '.join(args)], env)
