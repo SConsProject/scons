@@ -120,6 +120,11 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
       Tool() has done.
     - Change SConscript() missing SConscript behavior - if must_exist=False,
       the warning is suppressed.
+    - Maintenance and doc: modernize some usage in Scanner package,
+      calling super(), switching some imitialization to comprehensions,
+      and code formatting.  Docstring for scanner Base moved from
+      init-method to class-level so it's picked up by Sphinx.
+      Added new sconsign filenames to skip_entry_list in Scanner/Dir.py
 
   From Dillan Mills:
     - Add support for the (TARGET,SOURCE,TARGETS,SOURCES,CHANGED_TARGETS,CHANGED_SOURCES}.relpath property.

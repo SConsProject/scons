@@ -23,13 +23,13 @@
 
 """Dependency scanner for SWIG code."""
 
-import SCons.Scanner
+from . import ClassicCPP
 
-SWIGSuffixes = [ '.i' ]
+SWIGSuffixes = ['.i']
 
 def SWIGScanner():
     expr = r'^[ \t]*%[ \t]*(?:include|import|extern)[ \t]*(<|"?)([^>\s"]+)(?:>|"?)'
-    scanner = SCons.Scanner.ClassicCPP("SWIGScanner", ".i", "SWIGPATH", expr)
+    scanner = ClassicCPP("SWIGScanner", ".i", "SWIGPATH", expr)
     return scanner
 
 # Local Variables:

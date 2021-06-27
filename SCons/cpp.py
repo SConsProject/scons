@@ -178,9 +178,8 @@ del override
 
 
 class FunctionEvaluator:
-    """
-    Handles delayed evaluation of a #define function call.
-    """
+    """Handles delayed evaluation of a #define function call."""
+
     def __init__(self, name, args, expansion):
         """
         Squirrels away the arguments and expansion value of a #define
@@ -194,6 +193,7 @@ class FunctionEvaluator:
         except AttributeError:
             pass
         self.expansion = expansion
+
     def __call__(self, *values):
         """
         Evaluates the expansion of a #define macro function called
@@ -205,19 +205,12 @@ class FunctionEvaluator:
         # corresponding values in this "call."  We'll use this when we
         # eval() the expansion so that arguments will get expanded to
         # the right values.
-        locals = {}
-        for k, v in zip(self.args, values):
-            locals[k] = v
-
-        parts = []
-        for s in self.expansion:
-            if s not in self.args:
-                s = repr(s)
-            parts.append(s)
+        args = self.args
+        localvars = {k: v for k, v in zip(args, values)}
+        parts = [s if s in args else repr(s) for s in self.expansion]
         statement = ' + '.join(parts)
 
-        return eval(statement, globals(), locals)
-
+        return eval(statement, globals(), localvars)
 
 
 # Find line continuations.
@@ -235,18 +228,16 @@ function_arg_separator = re.compile(r',\s*')
 
 
 class PreProcessor:
+    """The main workhorse class for handling C pre-processing."""
 
-    """
-    The main workhorse class for handling C pre-processing.
-    """
     def __init__(self, current=os.curdir, cpppath=(), dict={}, all=0, depth=-1):
         global Table
 
         cpppath = tuple(cpppath)
 
         self.searchpath = {
-            '"' :       (current,) + cpppath,
-            '<' :       cpppath + (current,),
+            '"': (current,) + cpppath,
+            '<': cpppath + (current,),
         }
 
         # Initialize our C preprocessor namespace for tracking the
@@ -259,7 +250,7 @@ class PreProcessor:
 
         # Return all includes without resolving
         if all:
-           self.do_include = self.all_include
+            self.do_include = self.all_include
 
         # Max depth of nested includes:
         # -1 = unlimited
@@ -274,9 +265,7 @@ class PreProcessor:
         # stack and changing what method gets called for each relevant
         # directive we might see next at this level (#else, #elif).
         # #endif will simply pop the stack.
-        d = {
-            'scons_current_file'    : self.scons_current_file
-        }
+        d = {'scons_current_file': self.scons_current_file}
         for op in Table.keys():
             d[op] = getattr(self, 'do_' + op)
         self.default_table = d
