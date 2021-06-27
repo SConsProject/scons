@@ -57,14 +57,19 @@ class DummyNode:
     def __init__(self, name, search_result=()):
         self.name = name
         self.search_result = tuple(search_result)
+
     def rexists(self):
-        return 1
+        return True
+
     def __str__(self):
         return self.name
+
     def Rfindalldirs(self, pathlist):
         return self.search_result + pathlist
+
     def __repr__(self):
         return self.name
+
     def __eq__(self, other):
         return self.name == other.name
 
