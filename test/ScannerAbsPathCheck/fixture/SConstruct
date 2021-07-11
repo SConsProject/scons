@@ -1,0 +1,43 @@
+import os
+import sys
+import SCons.Scanner
+
+sdk_root = None
+
+def verify_paths(node, env, scanpaths, arg):
+    """Verifies that the paths provided are as expected."""
+    global sdk_root
+    sdk_root_subdir = os.path.join(sdk_root, 'sdk_subdir')
+    if len(scanpaths) != 2:
+        raise Exception('Expected two entries in scanpaths')
+    if scanpaths[0].abspath != sdk_root:
+        raise Exception('Expected first scanpath=%s, got %s.' %
+                        (sdk_root, scanpaths[0].abspath))
+    if scanpaths[1].abspath != sdk_root_subdir:
+        raise Exception('Expected second scanpath=%s, got %s.' %
+                        (sdk_root_subdir, scanpaths[1].abspath))
+    return []
+
+
+# Create a scanner that generates a path using the variables in env['PYPATH'].
+pyscan = Scanner(name='pythonfile',
+                 function=verify_paths,
+                 argument=None,
+                 path_function=SCons.Scanner.FindPathDirs('PYPATH'),
+                 skeys=['.py'])
+
+# Create a builder that uses that scanner.
+b = Builder(action='$PYTHON $SOURCE', source_scanner=pyscan)
+
+env = Environment(BUILDERS={'DummyPythonBuilder': b})
+
+# Now set some variables that are needed by the scanner and/or the SConscript.
+env.Replace(
+    PYTHON=sys.executable,
+    PYPATH=['$SDKROOT', '$SDKROOT/sdk_subdir'],
+    SDKROOT=env.Dir('sdk'),
+)
+sdk_root = env['SDKROOT'].abspath
+
+Export('env')
+SConscript('subdir/SConscript', exports='env')

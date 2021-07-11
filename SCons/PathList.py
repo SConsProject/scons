@@ -20,6 +20,7 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 
 """Handle lists of directory paths.
 
@@ -43,6 +44,7 @@ TYPE_STRING_NO_SUBST = 0        # string with no '$'
 TYPE_STRING_SUBST = 1           # string containing '$'
 TYPE_OBJECT = 2                 # other object
 
+
 def node_conv(obj):
     """
     This is the "string conversion" routine that we have our substitutions
@@ -62,6 +64,7 @@ def node_conv(obj):
     else:
         result = get()
     return result
+
 
 class _PathList:
     """
@@ -123,15 +126,20 @@ class _PathList:
         PathList for a specific target and source.
         """
         result = []
-        for type, value in self.pathlist:
-            if type == TYPE_STRING_SUBST:
-                value = env.subst(value, target=target, source=source,
-                                  conv=node_conv)
+        for pathlist_type, value in self.pathlist:
+            if pathlist_type == TYPE_STRING_SUBST:
+                # We override conv below to use absolute paths when possible.
+                # This avoids problems with relative paths when the target's
+                # working directory is different than the FS object's working
+                # directory.
+                value = env.subst(
+                    value, target=target, source=source,
+                    conv=lambda x: x.abspath if hasattr(x, 'abspath') else x)
                 if SCons.Util.is_Sequence(value):
                     result.extend(SCons.Util.flatten(value))
                 elif value:
                     result.append(value)
-            elif type == TYPE_OBJECT:
+            elif pathlist_type == TYPE_OBJECT:
                 value = node_conv(value)
                 if value:
                     result.append(value)

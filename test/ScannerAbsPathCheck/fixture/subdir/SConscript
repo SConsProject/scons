@@ -1,0 +1,2 @@
+Import('env')
+env.DummyPythonBuilder(target=['foo'], source=['empty.py'])

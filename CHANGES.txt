@@ -40,6 +40,14 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
       _concat function.  If set to False, it will prepend and append $( and $). That way the various
       Environment variables can use that rather than "$( _concat(...) $)".
 
+  From Adam Gross:
+    - Fix an issue causing scanners to receive incorrect paths when the
+      environment contains a Directory node that is a subdirectory of the
+      source root directory, the environment variable used by the scanner
+      (e.g. env['LIBPATH']) references a subdirectory of that directory node,
+      and a SConscript file is being run that is not in the source root
+      directory.
+
   From David H:
     - Fix Issue #3906 - `IMPLICIT_COMMAND_DEPENDENCIES` was not properly disabled when
       set to any string value (For example ['none','false','no','off'])
