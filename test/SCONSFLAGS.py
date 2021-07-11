@@ -63,15 +63,20 @@ test.run(arguments = "-H")
 test.must_not_contain_any_line(test.stdout(), ['Help text.'])
 test.must_contain_all_lines(test.stdout(), ['-H, --help-options'])
 
-os.environ['SCONSFLAGS'] = '-Z'
 
 expect = r"""usage: scons [OPTION] [TARGET] ...
 
 SCons Error: no such option: -Z
 """
 
-test.run(arguments = "-H", status = 2,
+test.run(arguments = "-Z", status = 2,
          stderr = expect, match=TestSCons.match_exact)
+
+os.environ['SCONSFLAGS'] = '-Z'
+
+test.run(status = 2,
+         stderr = expect, 
+         match=TestSCons.match_exact)
 
 test.pass_test()
 

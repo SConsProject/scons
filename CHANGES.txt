@@ -252,6 +252,11 @@ RELEASE 4.1.0 - Tues, 19 Jan 2021 15:04:42 -0700
       where a check for BuilderBase raising exc. on __bool__ was optimized out.
       This issue was found due to a bug in Python 3.10.0a4. See issue #3860 for details.
 
+  From Dillan Mills:
+    - Fix support for short options (`-x`). 
+    - Add support for long and short options with nargs != '?' to contain spaces:
+      - `--extra A B C` and `-x A B C` will both work as expected
+
 
 RELEASE 4.0.1 - Mon, 16 Jul 2020 16:06:40 -0700
 

@@ -205,6 +205,21 @@ def _Add_Arguments(alist):
         ARGUMENTS[a] = b
         ARGLIST.append((a, b))
 
+def _Remove_Argument(aarg):
+    if aarg:
+        a, b = aarg.split('=', 1)
+
+        # remove from ARGLIST first which would contain duplicates if -x A=B A=B was specified on the CL
+        if (a, b) in ARGLIST:
+            ARGLIST.remove((a, b))
+
+            # Remove first in case no matching values left in ARGLIST
+            ARGUMENTS.pop(a, None)
+            # Set ARGUMENTS[A] back to latest value in ARGLIST (assuming order matches CL order)
+            for item in ARGLIST:
+                if item[0] == a:
+                    ARGUMENTS[a] = item[1]
+
 def _Add_Targets(tlist):
     if tlist:
         COMMAND_LINE_TARGETS.extend(tlist)
@@ -214,6 +229,15 @@ def _Add_Targets(tlist):
         _build_plus_default.extend(tlist)
         _build_plus_default._add_Default = _build_plus_default._do_nothing
         _build_plus_default._clear = _build_plus_default._do_nothing
+
+def _Remove_Target(targ):
+    if targ:
+        if targ in COMMAND_LINE_TARGETS:
+            COMMAND_LINE_TARGETS.remove(targ)
+        if targ in BUILD_TARGETS:
+            BUILD_TARGETS.remove(targ)
+        if targ in _build_plus_default:
+            _build_plus_default.remove(targ)
 
 def _Set_Default_Targets_Has_Been_Called(d, fs):
     return DEFAULT_TARGETS

@@ -35,7 +35,7 @@ test = TestSCons.TestSCons()
 
 test.write('SConstruct', """\
 env = Environment()
-AddOption('--force',
+AddOption('-F', '--force',
           action="store_true",
           help='force installation (overwrite any existing files)')
 AddOption('--prefix',
@@ -64,6 +64,9 @@ test.run('-Q -q . --prefix=/home/foo',
 test.run('-Q -q . -- --prefix=/home/foo --force',
          status=1,
          stdout="None\nNone\n")
+
+test.run('-Q -q . -F',
+         stdout="True\nNone\n")
 
 test.pass_test()
 
