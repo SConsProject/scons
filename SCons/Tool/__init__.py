@@ -48,6 +48,7 @@ import SCons.Node.FS
 import SCons.Scanner
 import SCons.Scanner.C
 import SCons.Scanner.D
+import SCons.Scanner.Java
 import SCons.Scanner.LaTeX
 import SCons.Scanner.Prog
 import SCons.Scanner.SWIG
@@ -57,6 +58,7 @@ DefaultToolpath = []
 
 CScanner = SCons.Scanner.C.CScanner()
 DScanner = SCons.Scanner.D.DScanner()
+JavaScanner = SCons.Scanner.Java.JavaScanner()
 LaTeXScanner = SCons.Scanner.LaTeX.LaTeXScanner()
 PDFLaTeXScanner = SCons.Scanner.LaTeX.PDFLaTeXScanner()
 ProgramScanner = SCons.Scanner.Prog.ProgramScanner()
@@ -521,7 +523,8 @@ def CreateJavaClassFileBuilder(env):
                                                 src_suffix='$JAVASUFFIX',
                                                 src_builder=['JavaFile'],
                                                 target_factory=fs.Entry,
-                                                source_factory=fs.File)
+                                                source_factory=fs.File,
+                                                target_scanner=JavaScanner)
         env['BUILDERS']['JavaClassFile'] = java_class_file
     return java_class_file
 
@@ -535,7 +538,8 @@ def CreateJavaClassDirBuilder(env):
         java_class_dir = SCons.Builder.Builder(action=javac_com,
                                                emitter={},
                                                target_factory=fs.Dir,
-                                               source_factory=fs.Dir)
+                                               source_factory=fs.Dir,
+                                               target_scanner=JavaScanner)
         env['BUILDERS']['JavaClassDir'] = java_class_dir
     return java_class_dir
 

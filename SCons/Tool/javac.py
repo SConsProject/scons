@@ -157,6 +157,7 @@ class pathopt:
                     default = [default]
                 path = path + default
         if path:
+            path = SCons.Util.flatten(path)
             return [self.opt, os.pathsep.join(map(str, path))]
         else:
             return []

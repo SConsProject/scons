@@ -97,6 +97,11 @@ class pathoptTestCase(unittest.TestCase):
             ['-foopath', '/foo'],
             '/foo',
             '')
+    
+    def test_list_within_list(self):
+        self.assert_pathopt(['-foopath', os.pathsep.join(['/foo','/bar'])],
+                    ['/foo', ['/bar']])
+
 
 if __name__ == "__main__":
     unittest.main()

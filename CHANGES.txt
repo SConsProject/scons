@@ -44,6 +44,8 @@ RELEASE  VERSION/DATE TO BE FILLED IN LATER
     - Fix Issue #3906 - `IMPLICIT_COMMAND_DEPENDENCIES` was not properly disabled when
       set to any string value (For example ['none','false','no','off'])
       Also previously 'All' wouldn't have the desired affect.
+    - Add JavaScanner to include JAVACLASSPATH as a dependency when using the Java tool.
+    - Fix incorrect Java classpath generation when a NodeList is used as part of any JAVA*PATH variables.
 
   From Ivan Kravets:
     - Provide a custom argument escape function for `TempFileMunge` using a new

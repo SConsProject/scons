@@ -215,15 +215,6 @@ env = Environment(JAVACCOMSTR="Compiling class files $TARGETS from $SOURCES")
                 <filename>;</filename>
                 on Windows).
             </para>
-
-            <para>
-                Note that this currently just adds the specified
-                directory via the <option>-classpath</option> option.
-                &SCons; does not currently search the
-                &cv-JAVACLASSPATH; directories for dependency
-                <filename>.class</filename>
-                files.
-            </para>
         </summary>
     </cvar>
 
