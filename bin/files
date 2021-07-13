@@ -26,6 +26,7 @@
 ./SCons/Platform/posix.py
 ./SCons/Platform/sunos.py
 ./SCons/Platform/win32.py
+./SCons/RemoteCache.py
 ./SCons/Scanner/C.py
 ./SCons/Scanner/D.py
 ./SCons/Scanner/Fortran.py

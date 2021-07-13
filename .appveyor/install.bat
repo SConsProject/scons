@@ -3,7 +3,7 @@ for /F "tokens=*" %%g in ('C:\\%WINPYTHON%\\python.exe -c "import sys; print(sys
 REM use mingw 32 bit until #3291 is resolved
 set PATH=C:\\%WINPYTHON%;C:\\%WINPYTHON%\\Scripts;C:\\ProgramData\\chocolatey\\bin;C:\\MinGW\\bin;C:\\MinGW\\msys\\1.0\\bin;C:\\cygwin\\bin;C:\\msys64\\usr\\bin;C:\\msys64\\mingw64\\bin;%PATH%
 C:\\%WINPYTHON%\\python.exe -m pip install -U --progress-bar off pip setuptools wheel
-C:\\%WINPYTHON%\\python.exe -m pip install -U --progress-bar off coverage codecov
+C:\\%WINPYTHON%\\python.exe -m pip install -U --progress-bar off urllib3 coverage codecov
 set STATIC_DEPS=true & C:\\%WINPYTHON%\\python.exe -m pip install -U --progress-bar off lxml
 C:\\%WINPYTHON%\\python.exe -m pip install -U --progress-bar off -r requirements.txt
 REM install 3rd party tools to test with

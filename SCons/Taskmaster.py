@@ -221,21 +221,8 @@ class Task(ABC):
                 if not t.retrieve_from_cache():
                     break
                 cached_targets.append(t)
-            if len(cached_targets) < len(self.targets):
-                # Remove targets before building. It's possible that we
-                # partially retrieved targets from the cache, leaving
-                # them in read-only mode. That might cause the command
-                # to fail.
-                #
-                for t in cached_targets:
-                    try:
-                        t.fs.unlink(t.get_internal_path())
-                    except (IOError, OSError):
-                        pass
+            if not self.process_cached_targets(cached_targets):
                 self.targets[0].build()
-            else:
-                for t in cached_targets:
-                    t.cached = 1
         except SystemExit:
             exc_value = sys.exc_info()[1]
             raise SCons.Errors.ExplicitExit(self.targets[0], exc_value.code)
@@ -249,11 +236,37 @@ class Task(ABC):
             buildError.exc_info = sys.exc_info()
             raise buildError
 
-    def executed_without_callbacks(self):
+    def process_cached_targets(self, cached_targets):
+        """
+        Processes the list of cached targets, updating the task based on
+        whether all targets were retrieved from cache.
+        Returns True if all targets were retrieved from cache, False otherwise.
+        """
+        if len(cached_targets) < len(self.targets):
+            # Remove targets before building. It's possible that we
+            # partially retrieved targets from the cache, leaving
+            # them in read-only mode. That might cause the command
+            # to fail.
+            #
+            for t in cached_targets:
+                try:
+                    t.fs.unlink(t.get_internal_path())
+                except (IOError, OSError):
+                    pass
+            return False
+        else:
+            for t in cached_targets:
+                t.cached = 1
+            return True
+
+    def executed_without_callbacks(self, target_infos=None):
         """
         Called when the task has been successfully executed
         and the Taskmaster instance doesn't want to call
         the Node's callback methods.
+
+        target_infos is unused. See executed_with_callbacks
+        documentation for its contents and purpose.
         """
         T = self.tm.trace
         if T: T.write(self.trace_message('Task.executed_without_callbacks()',
@@ -265,7 +278,7 @@ class Task(ABC):
                     side_effect.set_state(NODE_NO_STATE)
                 t.set_state(NODE_EXECUTED)
 
-    def executed_with_callbacks(self):
+    def executed_with_callbacks(self, target_infos=None):
         """
         Called when the task has been successfully executed and
         the Taskmaster instance wants to call the Node's callback
@@ -277,12 +290,25 @@ class Task(ABC):
         In any event, we always call "visited()", which will handle any
         post-visit actions that must take place regardless of whether
         or not the target was an actual built target or a source Node.
+
+        target_infos is optional. When provided, it is expected to be a list of
+        the same length as self.targets. Each list entry should be a tuple with
+        three entries: (1) the target file csig, (2) the target file sha256
+        csig, and (3) the target file size. It is expected to be in the same
+        order as self.targets.
         """
         global print_prepare
         T = self.tm.trace
         if T: T.write(self.trace_message('Task.executed_with_callbacks()',
                                          self.node))
 
+        if target_infos and len(target_infos) != len(self.targets):
+            raise Exception('executed_with_callbacks: Unexpected contents of '
+                            'target_infos. Expected %d infos, got %d.' %
+                            (len(self.targets), len(target_infos)))
+
+        changed = False
+        target_infos_index = 0
         for t in self.targets:
             if t.get_state() == NODE_EXECUTING:
                 for side_effect in t.side_effects:
@@ -290,13 +316,28 @@ class Task(ABC):
                 t.set_state(NODE_EXECUTED)
                 if not t.cached:
                     t.push_to_cache()
-                t.built()
+                    changed = True
+                if target_infos:
+                    # This was a remote cache hit, so we already have the node
+                    # size and csig. Avoid unnecessary I/O by providing it now.
+                    (csig, size) = target_infos[target_infos_index]
+                    target_infos_index = target_infos_index + 1
+                    t.built(csig, size)
+                else:
+                    t.built()
                 t.visited()
                 if (not print_prepare and
                     (not hasattr(self, 'options') or not self.options.debug_includes)):
                     t.release_target_info()
             else:
                 t.visited()
+
+        # Push the entire task to remote cache now that all targets have been
+        # marked as built. That clears memoizations, which allows us to
+        # properly retrieve csigs.
+        if (changed and self.tm.remote_cache and
+                self.tm.remote_cache.push_enabled):
+            self.tm.remote_cache.push_task(self)
 
     executed = executed_with_callbacks
 
@@ -546,6 +587,12 @@ class Task(ABC):
         # raise e.__class__, e.__class__(e), sys.exc_info()[2]
         #     exec("raise exc_type(exc_value).with_traceback(exc_traceback)")
 
+    def is_cacheable(self):
+        """Checks whether all targets for the task are cacheable."""
+        for t in self.targets:
+            if not t.should_retrieve_from_cache():
+                return False
+        return True
 
 
 class AlwaysTask(Task):
@@ -592,7 +639,8 @@ class Taskmaster:
     The Taskmaster for walking the dependency DAG.
     """
 
-    def __init__(self, targets=[], tasker=None, order=None, trace=None):
+    def __init__(self, targets=[], tasker=None, order=None, trace=None,
+                 remote_cache=None):
         self.original_top = targets
         self.top_targets_left = targets[:]
         self.top_targets_left.reverse()
@@ -607,6 +655,7 @@ class Taskmaster:
         self.trace = trace
         self.next_candidate = self.find_next_candidate
         self.pending_children = set()
+        self.remote_cache = remote_cache
 
     def find_next_candidate(self):
         """
@@ -1027,6 +1076,10 @@ class Taskmaster:
         """
         Check for dependency cycles.
         """
+        if self.remote_cache:
+            self.remote_cache.close()
+            self.remote_cache = None
+
         if not self.pending_children:
             return
 

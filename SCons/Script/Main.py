@@ -57,6 +57,7 @@ import SCons.Node
 import SCons.Node.FS
 import SCons.Platform
 import SCons.Platform.virtualenv
+import SCons.RemoteCache
 import SCons.SConf
 import SCons.Script
 import SCons.Taskmaster
@@ -226,7 +227,7 @@ class BuildTask(SCons.Taskmaster.OutOfDateTask):
             exit_status = status
             this_build_status = status
 
-    def executed(self):
+    def executed(self, target_infos=None):
         t = self.targets[0]
         if self.top and not t.has_builder() and not t.side_effect:
             if not t.exists():
@@ -247,9 +248,11 @@ class BuildTask(SCons.Taskmaster.OutOfDateTask):
                 self.do_failed()
             else:
                 print("scons: Nothing to be done for `%s'." % t)
-                SCons.Taskmaster.OutOfDateTask.executed(self)
+                SCons.Taskmaster.OutOfDateTask.executed(
+                    self, target_infos=target_infos)
         else:
-            SCons.Taskmaster.OutOfDateTask.executed(self)
+            SCons.Taskmaster.OutOfDateTask.executed(
+                self, target_infos=target_infos)
 
     def failed(self):
         # Handle the failure of a build task.  The primary purpose here
@@ -423,7 +426,7 @@ class QuestionTask(SCons.Taskmaster.AlwaysTask):
             this_build_status = 1
             self.tm.stop()
 
-    def executed(self):
+    def executed(self, target_infos=None):
         pass
 
 
@@ -1118,7 +1121,12 @@ def _main(parser):
 
     # Hash format and chunksize are set late to support SetOption being called
     # in a SConscript or SConstruct file.
-    SCons.Util.set_hash_format(options.hash_format)
+    # Remote caching requires SHA-256.
+    if (options.remote_cache_fetch_enabled or
+            options.remote_cache_push_enabled):
+        SCons.Util.set_hash_format('sha256')
+    else:
+        SCons.Util.set_hash_format(options.hash_format)
     if options.md5_chunksize:
         SCons.Node.FS.File.hash_chunksize = options.md5_chunksize * 1024
 
@@ -1152,7 +1160,8 @@ def _build_targets(fs, options, targets, target_top):
     if options.diskcheck:
         SCons.Node.FS.set_diskcheck(options.diskcheck)
 
-    SCons.CacheDir.cache_enabled = not options.cache_disable
+    SCons.CacheDir.cache_enabled = (not options.cache_disable and
+        not options.remote_cache_url)
     SCons.CacheDir.cache_readonly = options.cache_readonly
     SCons.CacheDir.cache_debug = options.cache_debug
     SCons.CacheDir.cache_force = options.cache_force
@@ -1271,6 +1280,22 @@ def _build_targets(fs, options, targets, target_top):
             """Leave the order of dependencies alone."""
             return dependencies
 
+    if options.remote_cache_fetch_enabled or options.remote_cache_push_enabled:
+        if not options.remote_cache_url:
+            raise Exception('--remote-cache-url is required when remote '
+                            'caching is enabled.')
+
+        SCons.RemoteCache.raise_if_not_supported()
+
+        remote_cache = SCons.RemoteCache.RemoteCache(
+            options.remote_cache_connections,
+            options.remote_cache_url,
+            options.remote_cache_fetch_enabled,
+            options.remote_cache_push_enabled,
+            options.cache_debug)
+    else:
+        remote_cache = None
+
     def tmtrace_cleanup(tfile):
         tfile.close()
 
@@ -1281,7 +1306,8 @@ def _build_targets(fs, options, targets, target_top):
         atexit.register(tmtrace_cleanup, tmtrace)
     else:
         tmtrace = None
-    taskmaster = SCons.Taskmaster.Taskmaster(nodes, task_class, order, tmtrace)
+    taskmaster = SCons.Taskmaster.Taskmaster(nodes, task_class, order, tmtrace,
+                                             remote_cache)
 
     # Let the BuildTask objects get at the options to respond to the
     # various print_* settings, tree_printer list, etc.
@@ -1301,7 +1327,8 @@ def _build_targets(fs, options, targets, target_top):
     # to check if python configured with threads.
     global num_jobs
     num_jobs = options.num_jobs
-    jobs = SCons.Job.Jobs(num_jobs, taskmaster)
+    jobs = SCons.Job.Jobs(num_jobs, taskmaster, remote_cache,
+                          options.use_scheduler_v2)
     if num_jobs > 1:
         msg = None
         if jobs.num_jobs == 1 or not python_has_threads:

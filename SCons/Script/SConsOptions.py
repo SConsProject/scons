@@ -142,8 +142,13 @@ class SConsValues(optparse.Values):
         'no_progress',
         'num_jobs',
         'random',
+        'remote_cache_connections',
+        'remote_cache_fetch_enabled',
+        'remote_cache_push_enabled',
+        'remote_cache_url',
         'silent',
         'stack_size',
+        'use_scheduler_v2',
         'warn',
     ]
 
@@ -885,6 +890,27 @@ def Parser(version):
                   action="store_true",
                   help="Build dependencies in random order.")
 
+    op.add_option('--remote-cache-connections',
+                  dest='remote_cache_connections', default=100,
+                  action='store', nargs=1, type='int',
+                  help='Allow N connections to the server.',
+                  metavar='N')
+
+    op.add_option('--remote-cache-fetch-enabled',
+                  dest='remote_cache_fetch_enabled', default=False,
+                  action='store_true',
+                  help='Whether to fetch nodes from the remote cache')
+
+    op.add_option('--remote-cache-push-enabled',
+                  dest='remote_cache_push_enabled', default=False,
+                  action='store_true',
+                  help='Whether to push nodes to the remote cache')
+
+    op.add_option('--remote-cache-url',
+                  dest='remote_cache_url', default='',
+                  action='store', nargs=1,
+                  help='Server URL for remote caching.')
+
     op.add_option('-s', '--silent', '--quiet',
                   dest="silent", default=False,
                   action="store_true",
@@ -951,6 +977,12 @@ def Parser(version):
                   action="store_const", const=3,
                   help="Search up directory tree for SConstruct,       "
                        "build Default() targets from local SConscript.")
+
+    op.add_option('--use-scheduler-v2',
+                  dest='use_scheduler_v2', default=False,
+                  action='store_true',
+                  help='Whether to use the more aggressive Parallel scheduler '
+                       'on a multi-CPU build.')
 
     def opt_version(option, opt, value, parser):
         sys.stdout.write(parser.version + '\n')

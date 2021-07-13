@@ -1,0 +1,2 @@
+env = Environment()
+env.Program('main', 'test_main.c')

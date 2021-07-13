@@ -681,6 +681,14 @@ class Node(object, metaclass=NoSlotsPyPy):
         """
         pass
 
+    def should_retrieve_from_cache(self):
+        """Returns whether this node should be retrieved from the cache
+
+        By default nodes are not cacheable. Child classes should override this
+        method if the CacheDir class supports them.
+        """
+        return False
+
     def retrieve_from_cache(self):
         """Try to retrieve the node's content from a cache
 
@@ -690,7 +698,8 @@ class Node(object, metaclass=NoSlotsPyPy):
 
         Returns true if the node was successfully retrieved.
         """
-        return 0
+        return (self.should_retrieve_from_cache() and
+            self.get_build_env().get_CacheDir().retrieve(self))
 
     #
     # Taskmaster interface subsystem
@@ -757,7 +766,7 @@ class Node(object, metaclass=NoSlotsPyPy):
             e.node = self
             raise
 
-    def built(self):
+    def built(self, csig=None, size=0):
         """Called just after this node is successfully built."""
 
         # Clear the implicit dependency caches of any Nodes
@@ -793,7 +802,15 @@ class Node(object, metaclass=NoSlotsPyPy):
             if not self.exists() and do_store_info:
                 SCons.Warnings.warn(SCons.Warnings.TargetNotBuiltWarning,
                                     "Cannot find target " + str(self) + " after building")
-        self.ninfo.update(self)
+
+        # If we already retrieved the NodeInfo from the cache, provide it now.
+        if csig:
+            self.ninfo = self.NodeInfo()
+            self.ninfo.update(self)
+            self.ninfo.csig = str(csig)
+            self.ninfo.size = size
+        else:
+            self.ninfo.update(self)
 
     def visited(self):
         """Called just after this node has been visited (with or

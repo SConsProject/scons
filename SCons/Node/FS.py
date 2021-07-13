@@ -1118,6 +1118,9 @@ class LocalFS:
     really need this one?
     """
 
+    def access(self, path, mode):
+        return os.access(path, mode)
+
     def chmod(self, path, mode):
         return os.chmod(path, mode)
 
@@ -3006,20 +3009,10 @@ class File(Base):
         if self.exists():
             self.get_build_env().get_CacheDir().push(self)
 
-    def retrieve_from_cache(self):
-        """Try to retrieve the node's content from a cache
-
-        This method is called from multiple threads in a parallel build,
-        so only do thread safe stuff here. Do thread unsafe stuff in
-        built().
-
-        Returns true if the node was successfully retrieved.
+    def should_retrieve_from_cache(self):
+        """Returns whether this node should be retrieved from the cache
         """
-        if self.nocache:
-            return None
-        if not self.is_derived():
-            return None
-        return self.get_build_env().get_CacheDir().retrieve(self)
+        return not self.nocache and self.is_derived()
 
     def visited(self):
         if self.exists() and self.executor is not None:
@@ -3274,7 +3267,7 @@ class File(Base):
         SCons.Node.Node.builder_set(self, builder)
         self.changed_since_last_build = 5
 
-    def built(self):
+    def built(self, csig=None, size=0):
         """Called just after this File node is successfully built.
 
          Just like for 'release_target_info' we try to release
@@ -3284,7 +3277,7 @@ class File(Base):
          @see: release_target_info
         """
 
-        SCons.Node.Node.built(self)
+        SCons.Node.Node.built(self, csig, size)
 
         if (not SCons.Node.interactive and
             not hasattr(self.attributes, 'keep_targetinfo')):

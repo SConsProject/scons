@@ -21,13 +21,14 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-"""Serial and Parallel classes to execute build tasks.
+"""Serial, Parallel, and ParallelV2 classes to execute build tasks.
 
 The Jobs class provides a higher level interface to start,
 stop, and wait on jobs.
 """
 
 import SCons.compat
+import SCons.Node
 
 import os
 import signal
@@ -64,7 +65,8 @@ class Jobs:
     methods for starting, stopping, and waiting on all N jobs.
     """
 
-    def __init__(self, num, taskmaster):
+    def __init__(self, num, taskmaster, remote_cache=None,
+                 use_scheduler_v2=False):
         """
         Create 'num' jobs using the given taskmaster.
 
@@ -76,19 +78,29 @@ class Jobs:
         allocated.  If more than one job is requested but the Parallel
         class can't do it, it gets reset to 1.  Wrapping interfaces that
         care should check the value of 'num_jobs' after initialization.
+
+        'remote_cache' can be set to a RemoteCache.RemoteCache object.
+
+        'use_scheduler_v2' can be set to True to opt into the newer and more
+        aggressive scheduler.
         """
 
         self.job = None
-        if num > 1:
-            stack_size = explicit_stack_size
-            if stack_size is None:
-                stack_size = default_stack_size
 
-            try:
+        stack_size = explicit_stack_size
+        if stack_size is None:
+            stack_size = default_stack_size
+
+        try:
+            if ((remote_cache and remote_cache.fetch_enabled) or
+                    use_scheduler_v2):
+                self.job = ParallelV2(taskmaster, num, stack_size, remote_cache)
+            elif num > 1:
                 self.job = Parallel(taskmaster, num, stack_size)
-                self.num_jobs = num
-            except NameError:
-                pass
+            self.num_jobs = num
+        except NameError:
+            pass
+
         if self.job is None:
             self.job = Serial(taskmaster)
             self.num_jobs = 1
@@ -359,7 +371,6 @@ else:
             self.taskmaster = taskmaster
             self.interrupted = InterruptState()
             self.tp = ThreadPool(num, stack_size, self.interrupted)
-
             self.maxjobs = num
 
         def start(self):
@@ -399,27 +410,198 @@ else:
                 # Let any/all completed tasks finish up before we go
                 # back and put the next batch of tasks on the queue.
                 while True:
-                    task, ok = self.tp.get()
+                    self.process_result()
                     jobs = jobs - 1
-
-                    if ok:
-                        task.executed()
-                    else:
-                        if self.interrupted():
-                            try:
-                                raise SCons.Errors.BuildError(
-                                    task.targets[0], errstr=interrupt_msg)
-                            except:
-                                task.exception_set()
-
-                        # Let the failed() callback function arrange
-                        # for the build to stop if that's appropriate.
-                        task.failed()
-
-                    task.postprocess()
 
                     if self.tp.resultsQueue.empty():
                         break
+
+            self.tp.cleanup()
+            self.taskmaster.cleanup()
+
+        def process_result(self):
+            task, ok = self.tp.get()
+
+            if ok:
+                task.executed()
+            else:
+                if self.interrupted():
+                    try:
+                        raise SCons.Errors.BuildError(
+                            task.targets[0], errstr=interrupt_msg)
+                    except:
+                        task.exception_set()
+
+                # Let the failed() callback function arrange
+                # for the build to stop if that's appropriate.
+                task.failed()
+
+            task.postprocess()
+
+    class ParallelV2(Parallel):
+        """
+        This class is an extension of the Parallel class that provides two main
+        improvements:
+
+        1. Minimizes time waiting for jobs by fetching tasks.
+        2. Supports remote caching.
+        """
+        __slots__ = ['remote_cache']
+
+        def __init__(self, taskmaster, num, stack_size, remote_cache):
+            super(ParallelV2, self).__init__(taskmaster, num, stack_size)
+
+            self.remote_cache = remote_cache
+
+        def get_next_task_to_execute(self, limit):
+            """
+            Finds the next task that is ready for execution. If limit is 0,
+            this function fetches until a task is found ready to execute.
+            Otherwise, this function will fetch up to "limit" number of tasks.
+
+            Returns tuple with:
+                1. Task to execute.
+                2. False if a call to next_task returned None, True otherwise.
+            """
+            count = 0
+            while limit == 0 or count < limit:
+                task = self.taskmaster.next_task()
+                if task is None:
+                    return None, False
+
+                try:
+                    # prepare task for execution
+                    task.prepare()
+                except:
+                    task.exception_set()
+                    task.failed()
+                    task.postprocess()
+                else:
+                    if task.needs_execute():
+                        return task, True
+                    else:
+                        task.executed()
+                        task.postprocess()
+
+                count = count + 1
+
+            # We hit the limit of tasks to retrieve.
+            return None, True
+
+        def start(self):
+            fetch_response_queue = queue.Queue(0)
+            if self.remote_cache:
+                self.remote_cache.set_fetch_response_queue(
+                    fetch_response_queue)
+
+            jobs = 0
+            tasks_left = True
+            pending_fetches = 0
+            cache_hits = 0
+            cache_misses = 0
+            cache_skips = 0
+            cache_suspended = 0
+
+            while True:
+                fetch_limit = 0 if jobs == 0 and pending_fetches == 0 else 1
+                if tasks_left:
+                    task, tasks_left = \
+                        self.get_next_task_to_execute(fetch_limit)
+                else:
+                    task = None
+
+                if not task and not tasks_left and jobs == 0 and \
+                        pending_fetches == 0:
+                    # No tasks left, no jobs, no cache fetches.
+                    break
+
+                while jobs > 0:
+                    # Break if there are no results available and one of the
+                    # following is true:
+                    #   1. There are tasks left.
+                    #   2. There is at least one job slot open and at least one
+                    #      remote cache fetch pending.
+                    # Otherwise we want to wait for jobs because the most
+                    # important factor for build speed is keeping the job
+                    # queue full.
+                    if ((tasks_left or
+                            (jobs < self.maxjobs and pending_fetches > 0))
+                            and self.tp.resultsQueue.empty()):
+                        break
+
+                    self.process_result()
+                    jobs = jobs - 1
+
+                    # Tasks could have been unblocked, so we should check
+                    # again.
+                    tasks_left = True
+
+                while pending_fetches > 0:
+                    # Trimming the remote cache fetch queue is the least
+                    # important job, so we only block if there are no responses
+                    # available, no tasks left to fetch, and no active jobs.
+                    if ((tasks_left or jobs > 0) and
+                            fetch_response_queue.empty()):
+                        break
+
+                    cache_task, cache_hit, target_infos = \
+                        fetch_response_queue.get()
+                    pending_fetches = pending_fetches - 1
+
+                    if cache_hit:
+                        cache_hits = cache_hits + 1
+                        cache_task.executed(target_infos=target_infos)
+                        cache_task.postprocess()
+
+                        # Tasks could have been unblocked, so we should check
+                        # again.
+                        tasks_left = True
+                    else:
+                        cache_misses = cache_misses + 1
+                        self.tp.put(cache_task)
+                        jobs = jobs + 1
+
+                if task:
+                    # Tasks should first go to the remote cache if enabled.
+                    if self.remote_cache:
+                        fetch_pending, task_cacheable = \
+                            self.remote_cache.fetch_task(task)
+                    else:
+                        fetch_pending = task_cacheable = False
+
+                    if fetch_pending:
+                        pending_fetches = pending_fetches + 1
+                    else:
+                        # Fetch is not pending because remote cache is not
+                        # being used or the task was not cacheable.
+                        #
+                        # Count the number of non-cacheable tasks but don't
+                        # count tasks with 1 target that is an alias, because
+                        # they are not actually run.
+                        if (len(task.targets) > 1 or
+                                not isinstance(task.targets[0],
+                                               SCons.Node.Alias.Alias)):
+                            if task_cacheable:
+                                cache_suspended = cache_suspended + 1
+                            else:
+                                cache_skips = cache_skips + 1
+                        self.tp.put(task)
+                        jobs = jobs + 1
+
+            # Instruct the remote caching layer to log information about
+            # the cache hit rate.
+            cache_count = cache_hits + cache_misses + cache_suspended
+            task_count = cache_count + cache_skips
+            if self.remote_cache and task_count > 0:
+                reset_count = self.remote_cache.reset_count
+                total_failures = self.remote_cache.total_failure_count
+                hit_pct = (cache_hits * 100.0 / cache_count if cache_count
+                           else 0.0)
+                cacheable_pct = cache_count * 100.0 / task_count
+                self.remote_cache.log_stats(
+                    hit_pct, cache_count, cache_hits, cache_misses,
+                    cache_suspended, cacheable_pct, cache_skips, task_count,
+                    total_failures, reset_count)
 
             self.tp.cleanup()
             self.taskmaster.cleanup()
