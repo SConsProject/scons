@@ -656,9 +656,7 @@ class _ActionAction(ActionBase):
             execute = execute_actions
         if chdir is _null:
             chdir = self.chdir
-        save_cwd = None
         if chdir:
-            save_cwd = os.getcwd()
             try:
                 chdir = str(chdir.get_abspath())
             except AttributeError:
@@ -685,8 +683,6 @@ class _ActionAction(ActionBase):
             except TypeError:
                 cmd = self.strfunction(target, source, env)
             if cmd:
-                if chdir:
-                    cmd = ('os.chdir(%s)\n' % repr(chdir)) + cmd
                 try:
                     get = env.get
                 except AttributeError:
@@ -698,23 +694,23 @@ class _ActionAction(ActionBase):
                 print_func(cmd, target, source, env)
         stat = 0
         if execute:
-            if chdir:
-                os.chdir(chdir)
-            try:
-                stat = self.execute(target, source, env, executor=executor)
-                if isinstance(stat, SCons.Errors.BuildError):
-                    s = exitstatfunc(stat.status)
-                    if s:
-                        stat.status = s
-                    else:
-                        stat = s
+            print(">"*80)
+            print("self:", self, "type(self):", type(self))
+            print("target:", *map(str, target))
+            print("source:", *map(str, source))
+            print("env:", env)
+            print("executor:", executor)
+            print("<"*80)
+
+            stat = self.execute(target, source, env, executor=executor, chdir=chdir)
+            if isinstance(stat, SCons.Errors.BuildError):
+                s = exitstatfunc(stat.status)
+                if s:
+                    stat.status = s
                 else:
-                    stat = exitstatfunc(stat)
-            finally:
-                if save_cwd:
-                    os.chdir(save_cwd)
-        if cmd and save_cwd:
-            print_func('os.chdir(%s)' % repr(save_cwd), target, source, env)
+                    stat = s
+            else:
+                stat = exitstatfunc(stat)
 
         return stat
 
@@ -881,7 +877,7 @@ class CommandAction(_ActionAction):
             return ''
         return _string_from_cmd_list(cmd_list[0])
 
-    def execute(self, target, source, env, executor=None):
+    def execute(self, target, source, env, executor=None, chdir=None):
         """Execute a command action.
 
         This will handle lists of commands as well as individual commands,
@@ -935,7 +931,7 @@ class CommandAction(_ActionAction):
         for cmd_line in filter(len, cmd_list):
             # Escape the command line for the interpreter we are using.
             cmd_line = escape_list(cmd_line, escape)
-            result = spawn(shell, escape, cmd_line[0], cmd_line, ENV)
+            result = spawn(shell, escape, cmd_line[0], cmd_line, ENV, chdir=chdir)
             if not ignore and result:
                 msg = "Error %s" % result
                 return SCons.Errors.BuildError(errstr=msg,

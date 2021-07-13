@@ -52,12 +52,9 @@ def escape(arg):
     return '"' + arg + '"'
 
 
-def exec_subprocess(l, env):
-    proc = subprocess.Popen(l, env = env, close_fds = True)
+def subprocess_spawn(sh, escape, cmd, args, env, chdir=None):
+    proc = subprocess.Popen([sh, '-c', ' '.join(args)], env=env, close_fds=True, cwd=chdir)
     return proc.wait()
-
-def subprocess_spawn(sh, escape, cmd, args, env):
-    return exec_subprocess([sh, '-c', ' '.join(args)], env)
 
 def exec_popen3(l, env, stdout, stderr):
     proc = subprocess.Popen(l, env = env, close_fds = True,
