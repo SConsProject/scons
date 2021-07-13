@@ -198,7 +198,7 @@ class Base:
 
         return self.path_function(env, dir, target, source)
 
-    def __call__(self, node, env, path=()):
+    def __call__(self, node, env, path=()) -> list:
         """Scans a single object.
 
         Args:
@@ -353,7 +353,7 @@ class Classic(Current):
         # In this case resource scanner needs to specify a filter on which files
         # get recursively processed.  Previously was hardcoded to 1 instead of
         # defaulted to 1.
-        kwargs['recursive'] = kwargs.get('recursive', 1)
+        kwargs['recursive'] = kwargs.get('recursive', True)
         kwargs['skeys'] = suffixes
         kwargs['name'] = name
 
