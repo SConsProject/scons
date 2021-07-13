@@ -48,18 +48,18 @@ jobs:
     - <<: *test_job
       python: 3.5
 
-    - <<: *test_job
-      python: 3.6
-      dist: xenial
+#    - <<: *test_job
+#      python: 3.6
+#      dist: xenial
 
     # to keep number of runs down, skip this since tested in 'coverage'
     #- <<: *test_job
     #  python: 3.7
     #  dist: xenial  # required for Python >= 3.7
 
-    - <<: *test_job
-      python: 3.8
-      dist: bionic
+#    - <<: *test_job
+#      python: 3.8
+#      dist: bionic
 
     - <<: *test_job
       python: 3.9

@@ -13,8 +13,8 @@ SCons - a software construction tool
    :target: https://sourceforge.net/projects/scons
    :alt: Sourceforge Total Downloads
 
-.. image:: https://travis-ci.org/SCons/scons.svg?branch=master
-   :target: https://travis-ci.org/SCons/scons
+.. image:: https://travis-ci.com/SCons/scons.svg?branch=master
+   :target: https://travis-ci.com/SCons/scons
    :alt: Travis CI build status
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/SCons/scons?svg=true&branch=master
@@ -47,6 +47,8 @@ Requirements
 Running SCons requires Python 3.5 or higher. There should be no other
 dependencies or requirements to run SCons.
 
+As of SCons 4.2.0 support for Python 3.5 is deprecated and will be removed
+with the next major release.
 
 By default, SCons knows how to search for available programming tools on
 various systems--see the SCons man page for details.  You may, of course,
@@ -129,5 +131,5 @@ Check the SCons web site at:
         http://www.scons.org/
 
 
-Copyright (c) 2001 - 2020 The SCons Foundation
+Copyright (c) 2001 - 2021 The SCons Foundation
 

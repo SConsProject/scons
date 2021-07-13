@@ -6,6 +6,9 @@ on the SCons download page:
 
 Here is a summary of the changes since 4.1.0:
 
+NOTE: The 4.2.0 Release of SCons will deprecate Python 3.5 Support. Python 3.5 support will be dropped in the next major release.
+
+
 NEW FUNCTIONALITY
 -----------------
 
