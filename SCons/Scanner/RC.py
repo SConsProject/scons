@@ -25,7 +25,7 @@
 
 
 import SCons.Node.FS
-import SCons.Scanner
+from . import ClassicCPP
 
 
 def no_tlb(nodes):
@@ -44,7 +44,7 @@ def RCScan():
         r'\s*.*?)'
         r'\s*(<|"| )([^>"\s]+)(?:[>"\s])*$'
     )
-    resScanner = SCons.Scanner.ClassicCPP(
+    resScanner = ClassicCPP(
         "ResourceScanner", "$RCSUFFIXES", "CPPPATH", res_re, recursive=no_tlb
     )
 

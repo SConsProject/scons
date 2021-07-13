@@ -71,9 +71,9 @@ for h in headers:
 # define some helpers:
 
 class DummyEnvironment(collections.UserDict):
-    def __init__(self,**kw):
-        collections.UserDict.__init__(self)
-        self.data.update(kw)
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.data.update(kwargs)
         self.fs = SCons.Node.FS.FS(test.workpath(''))
         
     def Dictionary(self, *args):

@@ -23,12 +23,11 @@
 
 """Dependency scanner for IDL (Interface Definition Language) files."""
 
-import SCons.Node.FS
-import SCons.Scanner
+from . import ClassicCPP
 
 def IDLScan():
     """Return a prototype Scanner instance for scanning IDL source files"""
-    cs = SCons.Scanner.ClassicCPP(
+    cs = ClassicCPP(
         "IDLScan",
         "$IDLSUFFIXES",
         "CPPPATH",

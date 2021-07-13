@@ -34,9 +34,9 @@ class DummyFS:
         return DummyNode(name)
 
 class DummyEnvironment(collections.UserDict):
-    def __init__(self, dict=None, **kw):
-        collections.UserDict.__init__(self, dict)
-        self.data.update(kw)
+    def __init__(self, mapping=None, **kwargs):
+        super().__init__(mapping)
+        self.data.update(kwargs)
         self.fs = DummyFS()
     def subst(self, strSubst, target=None, source=None, conv=None):
         if strSubst[0] == '$':
@@ -57,12 +57,21 @@ class DummyNode:
     def __init__(self, name, search_result=()):
         self.name = name
         self.search_result = tuple(search_result)
+
     def rexists(self):
-        return 1
+        return True
+
     def __str__(self):
         return self.name
+
     def Rfindalldirs(self, pathlist):
         return self.search_result + pathlist
+
+    def __repr__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == other.name
 
 class FindPathDirsTestCase(unittest.TestCase):
     def test_FindPathDirs(self):
@@ -238,10 +247,10 @@ class BaseTestCase(unittest.TestCase):
     def test_hash(self):
         """Test the Scanner.Base class __hash__() method"""
         s = SCons.Scanner.Base(self.func, "Hash")
-        dict = {}
-        dict[s] = 777
+        mapping = {}
+        mapping[s] = 777
         i = hash(id(s))
-        h = hash(list(dict.keys())[0])
+        h = hash(list(mapping)[0])
         self.assertTrue(h == i,
                         "hash Scanner base class expected %s, got %s" % (i, h))
 
@@ -349,7 +358,7 @@ class SelectorTestCase(unittest.TestCase):
         """Test creation of Scanner.Selector object"""
         s = SCons.Scanner.Selector({})
         assert isinstance(s, SCons.Scanner.Selector), s
-        assert s.dict == {}, s.dict
+        assert s.mapping == {}, s.mapping
 
     def test___call__(self):
         """Test calling Scanner.Selector objects"""

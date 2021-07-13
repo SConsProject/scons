@@ -82,7 +82,7 @@ test.write('incNO.tex', "\n")
 #   copied from CTest.py
 class DummyEnvironment(collections.UserDict):
     def __init__(self, **kw):
-        collections.UserDict.__init__(self)
+        super().__init__()
         self.data.update(kw)
         self.fs = SCons.Node.FS.FS(test.workpath(''))
 

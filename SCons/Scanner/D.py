@@ -26,21 +26,21 @@
 Coded by Andy Friesen, 17 Nov 2003
 """
 
-import SCons.Scanner
+import SCons.Node.FS
+from . import Classic
 
 def DScanner():
     """Return a prototype Scanner instance for scanning D source files"""
     ds = D()
     return ds
 
-class D(SCons.Scanner.Classic):
-    def __init__ (self):
-        SCons.Scanner.Classic.__init__ (
-            self,
-            name = "DScanner",
-            suffixes = '$DSUFFIXES',
-            path_variable = 'DPATH',
-            regex = r'(?:import\s+)([\w\s=,.]+)(?:\s*:[\s\w,=]+)?(?:;)'
+class D(Classic):
+    def __init__(self):
+        super().__init__(
+            name="DScanner",
+            suffixes='$DSUFFIXES',
+            path_variable='DPATH',
+            regex=r'(?:import\s+)([\w\s=,.]+)(?:\s*:[\s\w,=]+)?(?:;)',
         )
 
     def find_include(self, include, source_dir, path):
@@ -49,7 +49,7 @@ class D(SCons.Scanner.Classic):
 
         i = SCons.Node.FS.find_file(inc + '.d', (source_dir,) + path)
         if i is None:
-            i = SCons.Node.FS.find_file (inc + '.di', (source_dir,) + path)
+            i = SCons.Node.FS.find_file(inc + '.di', (source_dir,) + path)
         return i, include
 
     def find_include_names(self, node):

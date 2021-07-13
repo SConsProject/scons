@@ -27,11 +27,11 @@ import re
 
 import SCons.Node
 import SCons.Node.FS
-import SCons.Scanner
 import SCons.Util
 import SCons.Warnings
+from . import Classic, Current, FindPathDirs
 
-class F90Scanner(SCons.Scanner.Classic):
+class F90Scanner(Classic):
     """
     A Classic Scanner subclass for Fortran source files which takes
     into account both USE and INCLUDE statements.  This scanner will
@@ -48,7 +48,7 @@ class F90Scanner(SCons.Scanner.Classic):
     """
 
     def __init__(self, name, suffixes, path_variable,
-                 use_regex, incl_regex, def_regex, *args, **kw):
+                 use_regex, incl_regex, def_regex, *args, **kwargs):
 
         self.cre_use = re.compile(use_regex, re.M)
         self.cre_incl = re.compile(incl_regex, re.M)
@@ -62,13 +62,14 @@ class F90Scanner(SCons.Scanner.Classic):
 
             return self.scan(node, env, path)
 
-        kw['function'] = _scan
-        kw['path_function'] = SCons.Scanner.FindPathDirs(path_variable)
-        kw['recursive'] = 1
-        kw['skeys'] = suffixes
-        kw['name'] = name
+        kwargs['function'] = _scan
+        kwargs['path_function'] = FindPathDirs(path_variable)
+        kwargs['recursive'] = 1
+        kwargs['skeys'] = suffixes
+        kwargs['name'] = name
 
-        SCons.Scanner.Current.__init__(self, *args, **kw)
+        # bypasses the parent Classic initializer
+        Current.__init__(self, *args, **kwargs)
 
     def scan(self, node, env, path=()):
 

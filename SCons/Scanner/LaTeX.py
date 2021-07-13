@@ -26,8 +26,10 @@
 import os.path
 import re
 
-import SCons.Scanner
+import SCons.Node.FS
 import SCons.Util
+import SCons.Warnings
+from . import Base, FindPathDirs
 
 # list of graphics file extensions for TeX and LaTeX
 TexGraphics   = ['.eps', '.ps']
@@ -78,6 +80,7 @@ class FindENVPathDirs:
     """
     def __init__(self, variable):
         self.variable = variable
+
     def __call__(self, env, dir=None, target=None, source=None, argument=None):
         import SCons.PathList
         try:
@@ -116,7 +119,7 @@ def PDFLaTeXScanner():
     return ds
 
 
-class LaTeX(SCons.Scanner.Base):
+class LaTeX(Base):
     """Class for scanning LaTeX files for included files.
 
     Unlike most scanners, which use regular expressions that just
@@ -172,7 +175,7 @@ class LaTeX(SCons.Scanner.Base):
                         'includefrom', 'subincludefrom',
                         'inputfrom', 'subinputfrom']
 
-    def __init__(self, name, suffixes, graphics_extensions, *args, **kw):
+    def __init__(self, name, suffixes, graphics_extensions, *args, **kwargs):
         regex = r'''
             \\(
                 include
@@ -219,8 +222,7 @@ class LaTeX(SCons.Scanner.Base):
             def __init__(self, dictionary):
                 self.dictionary = {}
                 for k,n in dictionary.items():
-                    self.dictionary[k] = ( SCons.Scanner.FindPathDirs(n),
-                                           FindENVPathDirs(n) )
+                    self.dictionary[k] = (FindPathDirs(n), FindENVPathDirs(n))
 
             def __call__(self, env, dir=None, target=None, source=None,
                                     argument=None):
@@ -234,25 +236,28 @@ class LaTeX(SCons.Scanner.Base):
                 return tuple(di.items())
 
         class LaTeXScanCheck:
-            """Skip all but LaTeX source files, i.e., do not scan *.eps,
-            *.pdf, *.jpg, etc.
+            """Skip all but LaTeX source files.
+
+            Do not scan *.eps, *.pdf, *.jpg, etc.
             """
+
             def __init__(self, suffixes):
                 self.suffixes = suffixes
+
             def __call__(self, node, env):
                 current = not node.has_builder() or node.is_up_to_date()
                 scannable = node.get_suffix() in env.subst_list(self.suffixes)[0]
                 # Returning false means that the file is not scanned.
                 return scannable and current
 
-        kw['function'] = _scan
-        kw['path_function'] = FindMultiPathDirs(LaTeX.keyword_paths)
-        kw['recursive'] = 0
-        kw['skeys'] = suffixes
-        kw['scan_check'] = LaTeXScanCheck(suffixes)
-        kw['name'] = name
+        kwargs['function'] = _scan
+        kwargs['path_function'] = FindMultiPathDirs(LaTeX.keyword_paths)
+        kwargs['recursive'] = 0
+        kwargs['skeys'] = suffixes
+        kwargs['scan_check'] = LaTeXScanCheck(suffixes)
+        kwargs['name'] = name
 
-        SCons.Scanner.Base.__init__(self, *args, **kw)
+        super().__init__(*args, **kwargs)
 
     def _latex_names(self, include_type, filename):
         if include_type == 'input':
@@ -393,10 +398,10 @@ class LaTeX(SCons.Scanner.Base):
             inc_type, inc_subdir, inc_filename = include
 
             try:
-                if seen[inc_filename] == 1:
+                if seen[inc_filename]:
                     continue
             except KeyError:
-                seen[inc_filename] = 1
+                seen[inc_filename] = True
 
             #
             # Handle multiple filenames in include[1]
@@ -406,13 +411,16 @@ class LaTeX(SCons.Scanner.Base):
                 # Do not bother with 'usepackage' warnings, as they most
                 # likely refer to system-level files
                 if inc_type != 'usepackage':
-                    SCons.Warnings.warn(SCons.Warnings.DependencyWarning,
-                                        "No dependency generated for file: %s (included from: %s) -- file not found" % (i, node))
+                    SCons.Warnings.warn(
+                        SCons.Warnings.DependencyWarning,
+                        "No dependency generated for file: %s "
+                        "(included from: %s) -- file not found" % (i, node),
+                    )
             else:
                 sortkey = self.sort_key(n)
                 nodes.append((sortkey, n))
                 # recurse down
-                queue.extend( self.scan(n, inc_subdir) )
+                queue.extend(self.scan(n, inc_subdir))
 
         return [pair[1] for pair in sorted(nodes)]
 

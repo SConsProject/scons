@@ -35,7 +35,10 @@ those directories in PYTHONPATH.
 import itertools
 import os
 import re
-import SCons.Scanner
+
+import SCons.Node.FS
+import SCons.Util
+from . import Base
 
 # Capture python "from a import b" and "import a" statements.
 from_cre = re.compile(r'^\s*from\s+([^\s]+)\s+import\s+(.*)', re.M)
@@ -198,9 +201,13 @@ def scan(node, env, path=()):
 
 
 PythonSuffixes = ['.py']
-PythonScanner = SCons.Scanner.Base(scan, name='PythonScanner',
-                                   skeys=PythonSuffixes,
-                                   path_function=path_function, recursive=1)
+PythonScanner = Base(
+    scan,
+    name='PythonScanner',
+    skeys=PythonSuffixes,
+    path_function=path_function,
+    recursive=True,
+)
 
 # Local Variables:
 # tab-width:4
