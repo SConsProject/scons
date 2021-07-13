@@ -556,9 +556,9 @@ def is_LaTeX(flist,env,abspath):
             if srcNode is not None:
                 file_test = is_LaTeX(fileList, env, abspath)
 
-            # return on first file that finds latex is needed.
-            if file_test:
-                return file_test
+                # return on first file that finds latex is needed.
+                if file_test:
+                    return file_test
 
         if Verbose:
             print(" done scanning ",str(f))
